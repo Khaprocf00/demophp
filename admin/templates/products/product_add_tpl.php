@@ -70,6 +70,8 @@ if (isset($_GET['productId'])) {
                 // var_dump($_FILES['imageDetail']['name'][0]);
                 // die();
                 if ($_FILES['imageDetail']['name'][0] != "") {
+                    $db->where('product_id', $productDetail['id']);
+                    $db->delete('image_detail');
                     $count = 0;
                     if (!is_dir('uploads/' . $productDetail['id'] . '/')) {
                         mkdir('uploads/' . $productDetail['id'] . '/');
@@ -81,12 +83,14 @@ if (isset($_GET['productId'])) {
                             $alert =  "Lưu ý: Chỉ chọn file .jpg, .png, .jpeg .webp, .gif ,.svg";
                         } else {
                             move_uploaded_file($_FILES['imageDetail']['tmp_name'][$count], "uploads/" . $productDetail['id'] . '/' . $image_detail_path);
+                            $dataImage = [
+                                'product_id' => $productDetail['id'],
+                                'image_path' => $image_detail_path
+                            ];
+
+                            $db->insert('image_detail', $dataImage);
                         }
                         $count++;
-                    }
-                } else {
-                    if (!is_dir('uploads/' . $productDetail['id'] . '/')) {
-                        rmdir('uploads/' . $productDetail['id']);
                     }
                 }
 
@@ -151,6 +155,30 @@ if (isset($_GET['productId'])) {
             ];
             $insert = $product->insert($data);
             $brand->create($brandr, $insert);
+            if ($_FILES['imageDetail']['name'][0] != "") {
+                $db->where('product_id', $insert);
+                $db->delete('image_detail');
+                $count = 0;
+                if (!is_dir('uploads/' . $insert . '/')) {
+                    mkdir('uploads/' . $insert . '/');
+                }
+                foreach ($_FILES['imageDetail']['name'] as $item) {
+                    $image_detail_path = $item;
+                    $filetype = strtolower(pathinfo($item, PATHINFO_EXTENSION));
+                    if ($filetype != "jpg" && $filetype != "png" && $filetype != "jpeg" && $filetype != "webp" && $filetype != "gif" && $filetype != "svg") {
+                        $alert =  "Lưu ý: Chỉ chọn file .jpg, .png, .jpeg .webp, .gif ,.svg";
+                    } else {
+                        move_uploaded_file($_FILES['imageDetail']['tmp_name'][$count], "uploads/" . $insert . '/' . $image_detail_path);
+                        $dataImage = [
+                            'product_id' => $insert,
+                            'image_path' => $image_detail_path
+                        ];
+
+                        $db->insert('image_detail', $dataImage);
+                    }
+                    $count++;
+                }
+            }
             header('Location: edit/' . $insert);
             if ($insert) {
                 $message['message'] = "Thêm thành công";
@@ -187,23 +215,28 @@ include "templates/layout/sidebar.php";
                     <?php
                     if (isset($message['message'])) {
                     ?>
-                        <div class="mx-3 alert alert-<?= $message['alert'] ?>"><?= $message['message'] ?></div>
+                    <div class="mx-3 alert alert-<?= $message['alert'] ?>"><?= $message['message'] ?></div>
                     <?php
                     }
                     ?>
-                    <form action="" id="dropzoneFrom" class="col-12 row dropzone" method="POST" class="tm-edit-product-form" enctype="multipart/form-data">
+                    <form action="" id="form_action_product" class="col-12 row" method="POST"
+                        class="tm-edit-product-form" enctype="multipart/form-data">
                         <div class="col-xl-8 col-lg-8 col-md-12">
 
                             <div class="form-group mb-3">
                                 <label for="name">Tiêu đề
                                 </label>
-                                <input id="name" name="name" value="<?php if (isset($productDetail) && $productDetail != false) echo $productDetail['name'] ?>" type="text" class="form-control validate" />
+                                <input id="name" name="name"
+                                    value="<?php if (isset($productDetail) && $productDetail != false) echo $productDetail['name'] ?>"
+                                    type="text" class="form-control validate" />
                                 <div class="form-message"></div>
                             </div>
                             <div class="form-group mb-3 alias">
                                 <label for="alias">Đường dẫn
                                 </label>
-                                <input id="alias" style="padding-left: 190px;" value="<?php if (isset($productDetail) && $productDetail != false) echo $productDetail['code'] ?>" name="alias" type="text" class="form-control validate" />
+                                <input id="alias" style="padding-left: 190px;"
+                                    value="<?php if (isset($productDetail) && $productDetail != false) echo $productDetail['code'] ?>"
+                                    name="alias" type="text" class="form-control validate" />
                                 <div class="alias-main">http://localhost/demophp/</div>
                                 <div class="form-message"></div>
 
@@ -212,36 +245,42 @@ include "templates/layout/sidebar.php";
 
                             <div class="form-group mb-3">
                                 <label for="short_description">Mô tả ngắn sản phẩm</label>
-                                <textarea id="short_description" name="short_description" class="form-control validate" rows="5"><?php if (isset($productDetail) && $productDetail != false) echo $productDetail['short_description'] ?></textarea>
+                                <textarea id="short_description" name="short_description" class="form-control validate"
+                                    rows="5"><?php if (isset($productDetail) && $productDetail != false) echo $productDetail['short_description'] ?></textarea>
                                 <div class="form-message"></div>
 
                             </div>
                             <div class="form-group mb-3">
                                 <label for="content">Nội dung cản phẩm</label>
-                                <textarea id="content" name="content" class="form-control validate" rows="2"><?php if (isset($productDetail) && $productDetail != false) echo $productDetail['content'] ?></textarea>
+                                <textarea id="content" name="content" class="form-control validate"
+                                    rows="2"><?php if (isset($productDetail) && $productDetail != false) echo $productDetail['content'] ?></textarea>
                                 <div class="form-message"></div>
                             </div>
                             <div class="form-group mb-3">
                                 <label for="tskt">Thông số kĩ thuật</label>
-                                <textarea id="tskt" name="tskt" class="form-control validate" rows="5"><?php if (isset($productDetail) && $productDetail != false) echo $productDetail['content'] ?></textarea>
+                                <textarea id="tskt" name="tskt" class="form-control validate"
+                                    rows="5"><?php if (isset($productDetail) && $productDetail != false) echo $productDetail['content'] ?></textarea>
                                 <div class="form-message"></div>
                             </div>
-                            <input type="hidden" value="<?php if (isset($productDetail) && $productDetail != false) echo $productDetail['image_path'] ?>" id="checkImage" name="checkImage">
+                            <input type="hidden"
+                                value="<?php if (isset($productDetail) && $productDetail != false) echo $productDetail['image_path'] ?>"
+                                id="checkImage" name="checkImage">
 
                         </div>
                         <div class="col-xl-4 col-lg-4 col-md-12">
                             <div class="form-group mb-3">
                                 <label>Danh mục cấp 1</label>
-                                <select id="form-select-1" name="formselect" class="form-control select2" style="width: 100%;">
+                                <select id="form-select-1" name="formselect" class="form-control select2"
+                                    style="width: 100%;">
                                     <option value="-1">---- Chọn danh mục cấp 1 ----</option>
                                     <?php
                                     foreach ($categorys as $category) {
                                     ?>
-                                        <option <?php
+                                    <option <?php
                                                 if (isset($productDetail) && $productDetail != false)
                                                     if (in_array($category['id'], $cate))
                                                         echo "selected"; ?> value="<?= $category['id'] ?>">
-                                            <?= $category['name'] ?></option>
+                                        <?= $category['name'] ?></option>
                                     <?php
                                     }
                                     ?>
@@ -250,14 +289,16 @@ include "templates/layout/sidebar.php";
                             </div>
                             <div class="form-group mb-3">
                                 <label>Danh mục cấp 2</label>
-                                <select name="form-select-2" id="form-select-2" class="form-control select3" style="width: 100%;">
+                                <select name="form-select-2" id="form-select-2" class="form-control select3"
+                                    style="width: 100%;">
                                     <option value="-1">---- Chọn danh mục cấp 2 ----</option>
 
                                 </select>
                             </div>
                             <div class="form-group mb-3">
                                 <label>Danh mục cấp 3</label>
-                                <select id="form-select-3" name="form-select-3" class="form-control select4" style="width: 100%;">
+                                <select id="form-select-3" name="form-select-3" class="form-control select4"
+                                    style="width: 100%;">
                                     <option value="-1">---- Chọn danh mục cấp 3 ----</option>
 
                                 </select>
@@ -269,13 +310,15 @@ include "templates/layout/sidebar.php";
                                     $brands = $brand->getAll();
                                     foreach ($brands as $item) {
                                     ?>
-                                        <label for="<?= $item['alias'] ?>" class="col-4 d-flex brand p-2">
-                                            <input <?php if (isset($productDetail) && $productDetail != false) {
+                                    <label for="<?= $item['alias'] ?>" class="col-4 d-flex brand p-2">
+                                        <input <?php if (isset($productDetail) && $productDetail != false) {
                                                         if ($brand->checkBrand($item['id'], $productDetail['id'])) {
                                                             echo "checked";
                                                         }
-                                                    } ?> type="checkbox" name="brandr[]" id="<?= $item['alias'] ?>" value="<?= $item['id'] ?>"><img style="width: 100px;" src="assets/images/png/<?= $item['image_path'] ?>" alt="">
-                                        </label>
+                                                    } ?> type="checkbox" name="brandr[]" id="<?= $item['alias'] ?>"
+                                            value="<?= $item['id'] ?>"><img style="width: 100px;"
+                                            src="assets/images/png/<?= $item['image_path'] ?>" alt="">
+                                    </label>
 
                                     <?php
                                     }
@@ -286,26 +329,51 @@ include "templates/layout/sidebar.php";
                             <div class="col-xl-12 col-lg-12 p-0 col-md-12 mx-auto mb-4">
                                 <div class="col-xl-12 p-0 col-lg-12 col-md-12">
                                     <label for="image">Ảnh đại diện</label>
-                                    <input <?php if (!isset($productDetail)) echo 'required' ?> name="image_path" type="file" id="image" accept="image/png, image/jpeg,image/svg" />
-                                    <img width="300px" class="mt-2" src="<?php if (isset($productDetail) && $productDetail != false) echo 'admin/uploads/' . $productDetail['image_path'] ?>" id="thumbnail">
+                                    <input <?php if (!isset($productDetail)) echo 'required' ?> name="image_path"
+                                        type="file" id="image" accept="image/png, image/jpeg,image/svg" />
+                                    <img width="300px" class="mt-2"
+                                        src="<?php if (isset($productDetail) && $productDetail != false) echo 'admin/uploads/' . $productDetail['image_path'] ?>"
+                                        id="thumbnail">
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label class="d-block">Ảnh chi tiết</label>
-                                <input id="imageDetail" type="file" name="imageDetail[]" multiple value="Chọn ảnh chi tiết">
-                                <div id="showImageDetail" class=""></div>
+                                <input id="imageDetail" type="file" name="imageDetail[]" multiple
+                                    value="Chọn ảnh chi tiết">
+                                <div id="showImageDetail" class="">
+                                    <?php
+                                    if (isset($productDetail)) {
+
+                                        $imageDetail = $db->rawQuery("SELECT * from table_image_detail where product_id = " . $productDetail['id']);
+                                        if ($imageDetail != null) {
+                                            foreach ($imageDetail as $item) {
+                                    ?>
+                                    <img width="100px" class="m-2"
+                                        src="admin/uploads/<?= $productDetail['id'] ?>/<?= $item['image_path'] ?>"
+                                        alt="" />
+
+                                    <?php
+                                            }
+                                        }
+                                    }
+                                    ?>
+                                </div>
                             </div>
                             <div class="form-group mb-3">
                                 <label for="title_sale">Tiêu đề sale
                                 </label>
-                                <input id="title_sale" value="<?php if (isset($productDetail) && $productDetail != false) echo $productDetail['title_sale'] ?>" name="title_sale" type="text" class="form-control validate" />
+                                <input id="title_sale"
+                                    value="<?php if (isset($productDetail) && $productDetail != false) echo $productDetail['title_sale'] ?>"
+                                    name="title_sale" type="text" class="form-control validate" />
                                 <div class="form-message"></div>
 
                             </div>
                             <div class="form-group mb-3">
                                 <label for="sku">Mã sản phẩm
                                 </label>
-                                <input id="sku" value="<?php if (isset($productDetail) && $productDetail != false) echo $productDetail['sku'] ?>" name="sku" type="text" class="form-control validate" />
+                                <input id="sku"
+                                    value="<?php if (isset($productDetail) && $productDetail != false) echo $productDetail['sku'] ?>"
+                                    name="sku" type="text" class="form-control validate" />
                                 <div class="form-message"></div>
 
                             </div>
@@ -313,14 +381,19 @@ include "templates/layout/sidebar.php";
                                 <div class="form-group mb-3 col-xs-12 col-sm-6">
                                     <label for="price">Giá sản phẩm
                                     </label>
-                                    <input id="price" value="<?php if (isset($productDetail) && $productDetail != false) echo $productDetail['price'] ?>" name="price" type="text" placeholder="0đ-10000000đ" class="form-control validate" data-large-mode="true" />
+                                    <input id="price"
+                                        value="<?php if (isset($productDetail) && $productDetail != false) echo $productDetail['price'] ?>"
+                                        name="price" type="text" placeholder="0đ-10000000đ"
+                                        class="form-control validate" data-large-mode="true" />
                                     <div class="form-message"></div>
 
                                 </div>
                                 <div class="form-group mb-3 col-xs-12 col-sm-6">
                                     <label for="discount">Giảm giá
                                     </label>
-                                    <input id="discount" value="<?php if (isset($productDetail) && $productDetail != false) echo $productDetail['discount'] ?>" name="discount" type="text" class="form-control validate" />
+                                    <input id="discount"
+                                        value="<?php if (isset($productDetail) && $productDetail != false) echo $productDetail['discount'] ?>"
+                                        name="discount" type="text" class="form-control validate" />
                                     <div class="form-message"></div>
                                 </div>
                             </div>
@@ -330,7 +403,9 @@ include "templates/layout/sidebar.php";
                                     else echo "Add " ?>Product
                                     Now</button>
                             </div>
-                            <input type="hidden" value="<?php if (isset($productDetail) && $productDetail != false) echo $productDetail['image_path'] ?>" id="checkImage" name="checkImage">
+                            <input type="hidden"
+                                value="<?php if (isset($productDetail) && $productDetail != false) echo $productDetail['image_path'] ?>"
+                                id="checkImage" name="checkImage">
                         </div>
                     </form>
 
@@ -342,162 +417,162 @@ include "templates/layout/sidebar.php";
     <?php
     include 'templates/layout/footer.php';
     ?>
-    <script src="assets/js/validatorsss.js"></script>
+    <script src="assets/js/validator.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            Validator({
-                form: '#form_action_product',
-                formGroupSelector: '.form-group',
-                errorSelector: '.form-message',
-                rules: [
-                    Validator.isRequired('#name', 'Vui lòng nhập tên sản phẩm'),
-                    Validator.isRequired('#sku', 'Vui lòng mã sản phẩm'),
-                    Validator.isRequired('#price', 'Vui lòng nhập giá'),
-                    Validator.isRequired('#content', 'Vui lòng nhập nội dung'),
-                    Validator.isRequired('#short_description', 'Vui lòng nhập mô tả ngắn'),
-                    Validator.isRequired('#tskt', 'Vui lòng nhập tên đăng nhập'),
-                    Validator.isRequired('#discount', 'Vui lòng nhập tên đăng nhập'),
-                ],
-                onSubmit: "Submit"
-            });
+    document.addEventListener('DOMContentLoaded', function() {
+        Validator({
+            form: '#form_action_product',
+            formGroupSelector: '.form-group',
+            errorSelector: '.form-message',
+            rules: [
+                Validator.isRequired('#name', 'Vui lòng nhập tên sản phẩm'),
+                Validator.isRequired('#sku', 'Vui lòng mã sản phẩm'),
+                Validator.isRequired('#price', 'Vui lòng nhập giá'),
+                Validator.isRequired('#content', 'Vui lòng nhập nội dung'),
+                Validator.isRequired('#short_description', 'Vui lòng nhập mô tả ngắn'),
+                Validator.isRequired('#tskt', 'Vui lòng nhập tên đăng nhập'),
+                Validator.isRequired('#discount', 'Vui lòng nhập tên đăng nhập'),
+            ],
+            onSubmit: "Submit"
         });
+    });
     </script>
     <script src="admin/assets/js/product.js"></script>
     <script src="admin/assets/js/vietnamestones.js"></script>
 
     <script>
+    let formattedPrice = new Intl.NumberFormat("en-US", {
+        style: 'currency',
+        currency: 'USD'
+    }).format($('#price').val());
+    $('#price').val(formattedPrice);
+    $('#price').on('change', function() {
+        $price = $('#price').val();
+        $price = $price.replaceAll('$', '');
+        $price = $price.replaceAll(',', '');
         let formattedPrice = new Intl.NumberFormat("en-US", {
             style: 'currency',
             currency: 'USD'
-        }).format($('#price').val());
+        }).format($price);
         $('#price').val(formattedPrice);
-        $('#price').on('change', function() {
-            $price = $('#price').val();
-            $price = $price.replaceAll('$', '');
-            $price = $price.replaceAll(',', '');
-            let formattedPrice = new Intl.NumberFormat("en-US", {
-                style: 'currency',
-                currency: 'USD'
-            }).format($price);
-            $('#price').val(formattedPrice);
-        })
+    })
+    let formattedDiscount = new Intl.NumberFormat("en-US", {
+        style: 'currency',
+        currency: 'USD'
+    }).format($('#discount').val());
+    $('#discount').val(formattedDiscount);
+    $('#discount').on('change', function() {
+        $discount = $('#discount').val();
+        $discount = $discount.replaceAll('$', '');
+        $discount = $discount.replaceAll(',', '');
         let formattedDiscount = new Intl.NumberFormat("en-US", {
             style: 'currency',
             currency: 'USD'
-        }).format($('#discount').val());
+        }).format($discount);
         $('#discount').val(formattedDiscount);
-        $('#discount').on('change', function() {
-            $discount = $('#discount').val();
-            $discount = $discount.replaceAll('$', '');
-            $discount = $discount.replaceAll(',', '');
-            let formattedDiscount = new Intl.NumberFormat("en-US", {
-                style: 'currency',
-                currency: 'USD'
-            }).format($discount);
-            $('#discount').val(formattedDiscount);
-        })
+    })
 
-        $(document).ready(function() {
-            var productDetailId = <?= isset($productDetail['id']) ? $productDetail['id'] : 'null'; ?>;
-            $('.select2').select2()
-            $('.select3').select2()
-            $('.select4').select2()
-            $('#image').change(function() {
-                showProductThumbnail(this);
-                $('#checkImage').val($('#thumbnail').attr('src'));
-            });
-            $('#imageDetail').change(function() {
-                $("#showImageDetail").html("");
-                var files = $("#imageDetail")[0].files;
-                for (var i = 0; i < files.length; i++) {
-                    printFile(files[i]);
-                }
-            });
-
-            function printFile(file) {
-                const reader = new FileReader();
-                reader.onload = (evt) => {
-                    $('#showImageDetail').append('<img width="100px" class="m-2" src="' + evt.target.result +
-                        '" alt="" />')
-                };
-                reader.readAsDataURL(file);
+    $(document).ready(function() {
+        var productDetailId = <?= isset($productDetail['id']) ? $productDetail['id'] : 'null'; ?>;
+        $('.select2').select2()
+        $('.select3').select2()
+        $('.select4').select2()
+        $('#image').change(function() {
+            showProductThumbnail(this);
+            $('#checkImage').val($('#thumbnail').attr('src'));
+        });
+        $('#imageDetail').change(function() {
+            $("#showImageDetail").html("");
+            var files = $("#imageDetail")[0].files;
+            for (var i = 0; i < files.length; i++) {
+                printFile(files[i]);
             }
+        });
 
-            if ($('#form-select-1').val() != -1) {
-                $.ajax({
-                    type: "GET",
-                    url: "admin/ajax/select1.php",
-                    data: {
-                        form_select_1: $('#form-select-1').val(),
-                        productDetailId: <?= isset($productDetail['id']) ? $productDetail['id'] : 'null'; ?>,
-                    },
-                    success: function(data) {
-                        $('#form-select-2').html(data);
-                        $('#form-select-3').html(
-                            "<option value='-1'>---- Chọn danh mục cấp 3 ----</option>");
-                    },
+        function printFile(file) {
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                $('#showImageDetail').append('<img width="100px" class="m-2" src="' + evt.target.result +
+                    '" alt="" />')
+            };
+            reader.readAsDataURL(file);
+        }
 
-                });
-            }
-            $('#form-select-1').change(function() {
-                $.ajax({
-                    type: "GET",
-                    url: "admin/ajax/select1.php",
+        if ($('#form-select-1').val() != -1) {
+            $.ajax({
+                type: "GET",
+                url: "admin/ajax/select1.php",
+                data: {
+                    form_select_1: $('#form-select-1').val(),
+                    productDetailId: <?= isset($productDetail['id']) ? $productDetail['id'] : 'null'; ?>,
+                },
+                success: function(data) {
+                    $('#form-select-2').html(data);
+                    $('#form-select-3').html(
+                        "<option value='-1'>---- Chọn danh mục cấp 3 ----</option>");
+                },
 
-                    data: "form_select_1=" + $('#form-select-1').val(),
-                    success: function(data) {
-                        $('#form-select-2').html(data);
-                        $('#form-select-3').html(
-                            "<option value='-1'>---- Chọn danh mục cấp 3 ----</option>");
-                    },
-
-                });
             });
+        }
+        $('#form-select-1').change(function() {
+            $.ajax({
+                type: "GET",
+                url: "admin/ajax/select1.php",
 
-            $('#form-select-2').change(function() {
-                $.ajax({
-                    type: "GET",
-                    url: "admin/ajax/select2.php",
-                    data: "form_select_2=" + $('#form-select-2').val(),
-                    success: function(data) {
-                        $('#form-select-3').html(data);
-                    },
+                data: "form_select_1=" + $('#form-select-1').val(),
+                success: function(data) {
+                    $('#form-select-2').html(data);
+                    $('#form-select-3').html(
+                        "<option value='-1'>---- Chọn danh mục cấp 3 ----</option>");
+                },
 
-                });
             });
-        })
+        });
 
-        $('#name').on('input', function(event) {
-            var val = removeVietnameseTones($('#name').val());
-            $('#alias').val(val);
-        })
+        $('#form-select-2').change(function() {
+            $.ajax({
+                type: "GET",
+                url: "admin/ajax/select2.php",
+                data: "form_select_2=" + $('#form-select-2').val(),
+                success: function(data) {
+                    $('#form-select-3').html(data);
+                },
+
+            });
+        });
+    })
+
+    $('#name').on('input', function(event) {
+        var val = removeVietnameseTones($('#name').val());
+        $('#alias').val(val);
+    })
     </script>
     <script src="admin/assets/js/build-ckeditor.js"></script>
     <style>
-        input[type=file]::file-selector-button {
-            margin-right: 20px;
-            border: none;
-            background: #084cdf;
-            padding: 10px 20px;
-            border-radius: 10px;
-            color: #fff;
-            cursor: pointer;
-            transition: background .2s ease-in-out;
-        }
+    input[type=file]::file-selector-button {
+        margin-right: 20px;
+        border: none;
+        background: #084cdf;
+        padding: 10px 20px;
+        border-radius: 10px;
+        color: #fff;
+        cursor: pointer;
+        transition: background .2s ease-in-out;
+    }
 
-        input[type=file]::file-selector-button:hover {
-            background: #0d45a5;
-        }
+    input[type=file]::file-selector-button:hover {
+        background: #0d45a5;
+    }
 
-        .form-group.invalid .input {
-            border-color: #f33a58;
-        }
+    .form-group.invalid .input {
+        border-color: #f33a58;
+    }
 
-        .form-group.invalid .form-message {
-            color: #f33a58;
-        }
+    .form-group.invalid .form-message {
+        color: #f33a58;
+    }
 
-        [class*=sidebar-dark-] .nav-treeview>.nav-item>.nav-link.active {
-            background: #000;
-        }
+    [class*=sidebar-dark-] .nav-treeview>.nav-item>.nav-link.active {
+        background: #000;
+    }
     </style>

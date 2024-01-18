@@ -15,6 +15,7 @@ class Product
     }
     public function show()
     {
+        $this->model->orderBy('id');
         $this->model->setPageLimit(8);
         if (isset($_GET['page'])) {
             $this->page = $_GET['page'];
