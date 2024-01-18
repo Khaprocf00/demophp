@@ -1,0 +1,18 @@
+
+
+RewriteEngine on
+
+RewriteRule ^([a-zA-Z0-9_-]+)$ index.php?slug=$1
+RewriteRule ^([a-zA-Z0-9_-]+)&page=([a-zA-Z0-9_-]+)$  index.php?slug=$1&page=$2
+RewriteRule ^cart/delete/([a-zA-Z0-9_-]+)$  index.php?slug=cart&action=delete&id=$1
+RewriteRule ^cart/update/([a-zA-Z0-9_-]+)/([a-zA-Z0-9_-]+)$  index.php?slug=cart&action=update&id=$1&qty=$2
+RewriteRule ^cart/insert index.php?slug=cart&action=insert
+
+
+
+
+RewriteRule ^admin/([a-zA-Z0-9_-]+)$ admin/index.php?slug=$1
+RewriteRule ^admin/([a-zA-Z0-9_-]+)&page=([a-zA-Z0-9_-]+)$ admin/index.php?slug=$1&page=$2
+RewriteRule ^admin/([a-zA-Z0-9_-]+)/([a-zA-Z0-9_-]+)$ admin/index.php?slug=$1&action=$2
+RewriteRule ^admin/([a-zA-Z0-9_-]+)/([a-zA-Z0-9_-]+)/([0-9]+)$ admin/index.php?slug=$1&action=$2&productId=$3
+

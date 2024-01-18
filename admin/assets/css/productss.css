@@ -1,0 +1,30 @@
+.select2-selection.select2-selection--single {
+    height: 38px;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    top: 6px;
+    right: 6px;
+}
+
+.ck-editor__editable_inline {
+    min-height: 200px;
+}
+
+.brand:hover {
+    background: #ccc;
+    cursor: pointer;
+}
+
+.alias {
+    position: relative;
+}
+
+.alias .alias-main {
+    position: absolute;
+    width: 180px;
+    height: 30px;
+    left: 12px;
+    bottom: 4px;
+    color: #aaa;
+}
